@@ -7,10 +7,10 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setClearColor(0x1a1a1a);
 document.body.appendChild(renderer.domElement);
 
-const ambientLight = new THREE.AmbientLight(0xffffff, 1); 
+const ambientLight = new THREE.AmbientLight(0xffffff, 1);
 scene.add(ambientLight);
 
-const pointLight = new THREE.PointLight(0xffffff, 3);  
+const pointLight = new THREE.PointLight(0xffffff, 3);
 pointLight.position.set(0, 0, 0);  // Sun's position for light source
 scene.add(pointLight);
 
@@ -35,45 +35,73 @@ const planetsData = [
   { name: 'Neptune', texture: '2k_neptune.jpg', size: 1.9, a: 15 * 30.069, e: 0.0086, speed: 0.002, rotationSpeed: 0.013 }
 ];
 
-// Create Planet Meshes and add them to the scene
+// Create Planet Meshes and Orbits
 const planetMeshes = planetsData.map(planet => {
   const texture = textureLoader.load(`../assets/textures/${planet.texture}`);
   const geometry = new THREE.SphereGeometry(planet.size, 32, 32);
   const material = new THREE.MeshStandardMaterial({ map: texture });
   const mesh = new THREE.Mesh(geometry, material);
   scene.add(mesh);
-  return { mesh, a: planet.a, e: planet.e, speed: planet.speed, rotationSpeed: planet.rotationSpeed, angle: Math.random() * Math.PI * 2 };  // Initialize with random angle for orbits
+
+  // Create the orbit as a line
+  const orbitPoints = [];
+  for (let theta = 0; theta <= 2 * Math.PI; theta += 0.01) {
+    const r = planet.a * (1 - planet.e * planet.e) / (1 + planet.e * Math.cos(theta));
+    orbitPoints.push(new THREE.Vector3(r * Math.cos(theta), 0, r * Math.sin(theta)));
+  }
+  
+  const orbitGeometry = new THREE.BufferGeometry().setFromPoints(orbitPoints);
+  const orbitMaterial = new THREE.LineBasicMaterial({ color: 0xffffff });
+  const orbit = new THREE.Line(orbitGeometry, orbitMaterial);
+  scene.add(orbit);
+
+  return { mesh, orbit, a: planet.a, e: planet.e, speed: planet.speed, rotationSpeed: planet.rotationSpeed, angle: Math.random() * Math.PI * 2 };  // Random start angle
 });
 
 // Orbit controls for interactive viewing
 const controls = new THREE.OrbitControls(camera, renderer.domElement);
 
+// Speed control
+const speedSlider = document.getElementById("speedSlider");
+const speedValue = document.getElementById("speedValue");
+let speedMultiplier = speedSlider.value;
+
+speedSlider.addEventListener('input', (event) => {
+  speedMultiplier = event.target.value;
+  speedValue.innerText = speedMultiplier;
+});
+
+// Orbit visibility control
+const orbitToggle = document.getElementById("orbitToggle");
+orbitToggle.addEventListener('input', (event) => {
+  const visible = event.target.checked;
+  planetMeshes.forEach(planet => {
+    planet.orbit.visible = visible;  // Toggle orbit visibility
+  });
+});
+
 function animate() {
   requestAnimationFrame(animate);
 
-  const time = Date.now() * 0.00005;  // Time variable for revolution (orbit)
+  const time = Date.now() * 0.00005 * speedMultiplier;
 
   // Rotate the Sun slowly
-  sun.rotation.y += 0.002;  // Slow rotation of the Sun
+  sun.rotation.y += 0.002;
 
   planetMeshes.forEach(planet => {
-    const a = planet.a;  // Semi-major axis
-    const e = planet.e;  // Eccentricity
-    const speed = planet.speed;  // Speed of orbit
-    const rotationSpeed = planet.rotationSpeed;  // Speed of axial rotation
+    const a = planet.a;
+    const e = planet.e;
+    const speed = planet.speed;
+    const rotationSpeed = planet.rotationSpeed;
 
-    // Update the current angle for orbit based on time and speed
-    planet.angle += speed;  // Update orbit angle over time
+    planet.angle += speed * speedMultiplier;
 
-    // Calculate the orbit position using the elliptical orbit formula
-    const r = a * (1 - e * e) / (1 + e * Math.cos(planet.angle));  // Orbit equation
+    const r = a * (1 - e * e) / (1 + e * Math.cos(planet.angle));
 
-    // Update position for elliptical orbit
     planet.mesh.position.x = r * Math.cos(planet.angle);
     planet.mesh.position.z = r * Math.sin(planet.angle);
 
-    // Rotate the planet on its axis
-    planet.mesh.rotation.y += rotationSpeed;  // Planet spinning
+    planet.mesh.rotation.y += rotationSpeed;
   });
 
   controls.update();

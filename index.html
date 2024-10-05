@@ -3,24 +3,41 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Interactive 3D Orrery</title>
+  <title>3D Solar System</title>
   <style>
     body {
       margin: 0;
       overflow: hidden;
     }
-    canvas {
-      display: block;
+    #controls {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 10;
+      font-size: 16px;
+      color: white;
+    }
+    #speedSlider {
+      width: 200px;
     }
   </style>
 </head>
 <body>
-  <!-- Three.js library -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  
-  <!-- OrbitControls library -->
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <!-- Controls for the simulation -->
+  <div id="controls">
+    <label for="speedSlider">Days per second:</label>
+    <input type="range" id="speedSlider" min="1" max="365" value="1">
+    <span id="speedValue">1</span> day(s)
 
+    <br/><br/>
+
+    <!-- Checkbox to toggle orbit visibility -->
+    <label for="orbitToggle">Show Orbits:</label>
+    <input type="checkbox" id="orbitToggle" checked>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
   <script src="./src/main.js"></script>
 </body>
 </html>
